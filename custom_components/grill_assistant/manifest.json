@@ -1,0 +1,15 @@
+{
+  "domain": "grill_assistant",
+  "name": "Grill Assistant",
+  "codeowners": [
+    "@GizmoGoody"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/GizmoGoody/grill-assistant",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/GizmoGoody/grill-assistant/issues",
+  "requirements": [],
+  "version": "0.1.0-alpha.1"
+}

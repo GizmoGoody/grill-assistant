@@ -1,0 +1,5 @@
+{
+  "name": "Grill Assistant",
+  "hide_default_branch": true,
+  "homeassistant": "2025.10.0"
+}
