@@ -26,7 +26,7 @@ class DoneBinarySensor(ProbeEntity, BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        return self.probe.in_use and self.probe.target is not None
+        return self.probe.cooking
 
     @property
     def is_on(self) -> bool:
@@ -38,7 +38,7 @@ class StalledBinarySensor(ProbeEntity, BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        return self.probe.in_use and self.probe.target is not None
+        return self.probe.cooking
 
     @property
     def is_on(self) -> bool:

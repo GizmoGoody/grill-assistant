@@ -6,15 +6,19 @@ from homeassistant.const import Platform
 
 DOMAIN = "grill_assistant"
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+
+# A grill's options
+CONF_GRILL_SENSORS = "grill_sensors"
+CONF_KEEP_LAST = "keep_last"
 
 # A probe is a config subentry of a grill
 SUBENTRY_PROBE = "probe"
+CONF_DEVICE = "device"
 CONF_READING = "reading"
+CONF_CHANNELS = "channels"
 CONF_COLORS = "colors"
-CONF_TIP_CHANNEL = "tip_channel"
-
-THERMOWORKS = "thermoworks_cloud"
+CONF_AUTO_ON = "auto_on"
 
 # Doneness for a target that matches no preset of the cook type
 CUSTOM = "custom"

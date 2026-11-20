@@ -4,21 +4,58 @@
       "cook_type": {
         "default": "mdi:food-steak",
         "state": {
-          "beef": "mdi:cow", "ground_beef": "mdi:hamburger", "pork": "mdi:pig", "poultry": "mdi:food-drumstick",
-          "seafood": "mdi:fish", "manual": "mdi:thermometer-probe"
+          "beef": "mdi:cow",
+          "ground_beef": "mdi:hamburger",
+          "pork": "mdi:pig",
+          "poultry": "mdi:food-drumstick",
+          "seafood": "mdi:fish",
+          "manual": "mdi:thermometer-probe"
         }
       },
-      "doneness": { "default": "mdi:thermometer-check" }
+      "doneness": {
+        "default": "mdi:thermometer-check"
+      }
     },
-    "number": { "target": { "default": "mdi:target" } },
+    "number": {
+      "target": {
+        "default": "mdi:target"
+      }
+    },
     "sensor": {
-      "progress": { "default": "mdi:progress-clock" },
-      "rate": { "default": "mdi:chart-line" },
-      "done_at": { "default": "mdi:timer-check-outline" }
+      "progress": {
+        "default": "mdi:progress-clock"
+      },
+      "rate": {
+        "default": "mdi:chart-line"
+      },
+      "done_at": {
+        "default": "mdi:timer-check-outline"
+      },
+      "active_probes": {
+        "default": "mdi:grill"
+      }
     },
     "binary_sensor": {
-      "done": { "default": "mdi:check-circle-outline", "state": { "on": "mdi:check-circle" } },
-      "stalled": { "default": "mdi:play-circle-outline", "state": { "on": "mdi:pause-circle" } }
+      "done": {
+        "default": "mdi:check-circle-outline",
+        "state": {
+          "on": "mdi:check-circle"
+        }
+      },
+      "stalled": {
+        "default": "mdi:play-circle-outline",
+        "state": {
+          "on": "mdi:pause-circle"
+        }
+      }
+    },
+    "switch": {
+      "active": {
+        "default": "mdi:thermometer-probe-off",
+        "state": {
+          "on": "mdi:thermometer-probe"
+        }
+      }
     }
   }
 }
