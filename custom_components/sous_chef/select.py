@@ -6,13 +6,13 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import GrillConfigEntry
+from . import SousChefConfigEntry
 from .const import PRESETS
 from .entity import ProbeEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: GrillConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
+    hass: HomeAssistant, entry: SousChefConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     for subentry_id, probe in entry.runtime_data.items():
         subentry = entry.subentries[subentry_id]

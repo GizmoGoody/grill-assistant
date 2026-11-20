@@ -1,1 +1,1 @@
-"""Tests for Grill Assistant."""
+"""Tests for Sous Chef."""

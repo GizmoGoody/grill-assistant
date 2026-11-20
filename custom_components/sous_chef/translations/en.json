@@ -30,7 +30,7 @@
           },
           "data_description": {
             "device": "Its temperature sensors are found on the device.",
-            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Grill Card shows the probe in these colors."
+            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Sous Chef Card shows the probe in these colors."
           }
         },
         "sensors": {
@@ -43,7 +43,7 @@
           },
           "data_description": {
             "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
-            "channels": "The probe's sensors, in order from the tip. The Grill Card lists them in this order.",
+            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order.",
             "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time."
           }
         },
@@ -56,10 +56,10 @@
             "channels": "Sensors from the tip"
           },
           "data_description": {
-            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Grill Card shows the probe in these colors.",
+            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Sous Chef Card shows the probe in these colors.",
             "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time.",
             "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
-            "channels": "The probe's sensors, in order from the tip. The Grill Card lists them in this order."
+            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order."
           }
         }
       },

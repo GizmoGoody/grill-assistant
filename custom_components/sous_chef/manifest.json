@@ -1,6 +1,6 @@
 {
-  "domain": "grill_assistant",
-  "name": "Grill Assistant",
+  "domain": "sous_chef",
+  "name": "Sous Chef",
   "categories": [
     "appliances_cleaning.cooking"
   ],
@@ -9,10 +9,10 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/GizmoGoody/grill-assistant",
+  "documentation": "https://github.com/GizmoGoody/sous-chef",
   "integration_type": "helper",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/GizmoGoody/grill-assistant/issues",
+  "issue_tracker": "https://github.com/GizmoGoody/sous-chef/issues",
   "requirements": [],
   "version": "0.1.0-alpha.3"
 }

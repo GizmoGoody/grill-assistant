@@ -12,13 +12,13 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import GrillConfigEntry
+from . import SousChefConfigEntry
 from .const import CONF_GRILL_SENSORS, DOMAIN
 from .entity import ProbeEntity
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: GrillConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
+    hass: HomeAssistant, entry: SousChefConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     for subentry_id, probe in entry.runtime_data.items():
         subentry = entry.subentries[subentry_id]
@@ -36,7 +36,7 @@ async def async_setup_entry(
 class ProgressSensor(ProbeEntity, SensorEntity):
     """How far the reading has come from the cook's start to the target.
 
-    Its attributes tell the Grill card which probe this is: the reading, the
+    Its attributes tell the Sous Chef Card which probe this is: the reading, the
     probe's own sensors in order from the tip, its colors and the cook's start.
     """
 
@@ -88,7 +88,7 @@ class DoneAtSensor(ProbeEntity, SensorEntity):
 class ActiveProbesSensor(SensorEntity):
     """How many of the grill's probes are on, on the grill's own device.
 
-    Its attributes tell the Grill card what is on the grill: the grill's own
+    Its attributes tell the Sous Chef Card what is on the grill: the grill's own
     sensors, and each probe's progress sensor.
     """
 
@@ -98,7 +98,7 @@ class ActiveProbesSensor(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _unrecorded_attributes = frozenset({"grill_sensors", "probes"})
 
-    def __init__(self, entry: GrillConfigEntry) -> None:
+    def __init__(self, entry: SousChefConfigEntry) -> None:
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_active_probes"
         self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry.entry_id)}, name=entry.title)
