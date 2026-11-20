@@ -1,10 +1,18 @@
 """Probe devices for the tests, as another integration would create them."""
 
+from datetime import timedelta
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 TEMPERATURE = {"unit_of_measurement": "°F", "device_class": "temperature"}
+
+
+def rfx_state(minutes_ago: float = 0) -> dict:
+    """An RFX reading's attributes, with the probe last seen this many minutes ago."""
+    return {**TEMPERATURE, "last_seen": (dt_util.utcnow() - timedelta(minutes=minutes_ago)).isoformat()}
 
 
 def _source(hass: HomeAssistant) -> MockConfigEntry:
