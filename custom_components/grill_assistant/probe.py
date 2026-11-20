@@ -7,7 +7,9 @@ the meat, that is the meat's own temperature, so a warm reading in the air
 before it went in does not count. The cook (on or off, type, doneness, target
 and start) is kept in Home Assistant's storage, so every browser shows the
 same cook and it lasts across restarts. A reading that goes blank for a while
-(a lost signal, a restart) changes nothing.
+(a lost signal, a restart) changes nothing. A known probe's reading counts only
+while the probe is reporting (see profiles.py), so a value left over from the
+last time it was used is no reading.
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, UnitOfTemperature
-from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, State, callback
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -38,6 +40,7 @@ from .const import (
     RATE_WINDOW_S,
     STALL_RATE,
 )
+from .profiles import known_layout
 
 SAMPLE_INTERVAL = timedelta(seconds=60)
 
@@ -84,6 +87,9 @@ class Probe:
         self.colors: list[str] = list(data.get(CONF_COLORS) or [])
         self.auto_on: bool = bool(data.get(CONF_AUTO_ON))
         self.keep_last = keep_last
+        layout = known_layout(hass, self.device_id)
+        self._seen_attribute = layout.seen_attribute if layout else None
+        self._stale_after = layout.stale_after if layout else None
         saved = store.data.get(probe_id, {})
         self.active: bool = saved.get("active", False)
         self.cook_type: str = saved.get("cook_type", MANUAL)
@@ -126,7 +132,7 @@ class Probe:
         # A probe that only reports once it is off its charger turns itself on.
         # A first state (no old state) is a sensor being set up, not a probe
         # taken off its charger, so it is left alone.
-        if self.auto_on and not self.active and old is not None and _number(old.state) is None and self.reading is not None:
+        if self.auto_on and not self.active and old is not None and self._value(old) is None and self.reading is not None:
             self.set_active(True)
             return
         self._sample()
@@ -158,10 +164,19 @@ class Probe:
 
     # -- What the entities show -------------------------------------------
 
+    def _value(self, state: State | None) -> float | None:
+        """A state's temperature, or None when the probe is not reporting."""
+        if state is None or (value := _number(state.state)) is None:
+            return None
+        if self._seen_attribute and self._stale_after:
+            seen = dt_util.parse_datetime(str(state.attributes.get(self._seen_attribute) or ""))
+            if seen is None or dt_util.utcnow() - seen > self._stale_after:
+                return None
+        return value
+
     @property
     def reading(self) -> float | None:
-        state = self.hass.states.get(self.reading_entity)
-        return _number(state.state) if state else None
+        return self._value(self.hass.states.get(self.reading_entity))
 
     @property
     def unit(self) -> str:

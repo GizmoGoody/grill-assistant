@@ -7,15 +7,17 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.grill_assistant.const import DOMAIN
 
-from .helpers import TEMPERATURE, rfx_meat
+from .helpers import rfx_meat, rfx_state
 
 ACTIVE = "switch.probe_active"
 
 
-async def _setup(hass: HomeAssistant, reading: str = "100", keep_last: bool = True) -> tuple[MockConfigEntry, str]:
+async def _setup(
+    hass: HomeAssistant, reading: str = "100", keep_last: bool = True, minutes_ago: float = 0
+) -> tuple[MockConfigEntry, str]:
     hass.config.units = US_CUSTOMARY_SYSTEM
     device, channels = rfx_meat(hass)
-    hass.states.async_set(channels[0], reading, TEMPERATURE)
+    hass.states.async_set(channels[0], reading, rfx_state(minutes_ago))
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Grill",
@@ -42,8 +44,8 @@ async def _setup(hass: HomeAssistant, reading: str = "100", keep_last: bool = Tr
     return entry, channels[0]
 
 
-async def _read(hass: HomeAssistant, entity_id: str, value: str) -> None:
-    hass.states.async_set(entity_id, value, TEMPERATURE)
+async def _read(hass: HomeAssistant, entity_id: str, value: str, minutes_ago: float = 0) -> None:
+    hass.states.async_set(entity_id, value, rfx_state(minutes_ago))
     await hass.async_block_till_done()
 
 
@@ -114,6 +116,26 @@ async def test_turns_on_when_it_starts_reporting(hass: HomeAssistant) -> None:
     _, reading = await _setup(hass, "unavailable")
     assert hass.states.get(ACTIVE).state == "off"
     await _read(hass, reading, "84")
+    assert hass.states.get(ACTIVE).state == "on"
+
+
+async def test_charger_value_is_no_reading(hass: HomeAssistant) -> None:
+    # On its charger, an RFX probe keeps showing its last value from days ago
+    _, reading = await _setup(hass, "70", minutes_ago=3000)
+    # A cloud blink brings the same old value back: the probe is not reporting, so it stays off
+    await _read(hass, reading, "unavailable")
+    await _read(hass, reading, "70", minutes_ago=3000)
+    assert hass.states.get(ACTIVE).state == "off"
+    await _switch(hass, True)
+    assert hass.states.get("sensor.probe_progress").attributes["start"] is None
+    # Off the charger it sends new data: that is its first reading
+    await _read(hass, reading, "68")
+    assert hass.states.get("sensor.probe_progress").attributes["start"] == 68
+
+
+async def test_off_the_charger_turns_it_on(hass: HomeAssistant) -> None:
+    _, reading = await _setup(hass, "70", minutes_ago=3000)
+    await _read(hass, reading, "71")
     assert hass.states.get(ACTIVE).state == "on"
 
 

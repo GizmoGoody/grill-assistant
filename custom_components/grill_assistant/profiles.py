@@ -5,25 +5,35 @@ reading. A known probe is one whose layout is built in, so it needs no
 questions: a ThermoWorks RFX MEAT reports its core as channel 0 (the lowest
 of its four sensors) and its sensors as channels 1 to 4, with channel 1 at
 the tip.
+
+A known probe can also say how to tell that it is reporting. ThermoWorks
+Cloud keeps showing a probe's last value while it sits on its charger, so an
+RFX probe is reporting only while its last_seen time is recent.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 import re
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 THERMOWORKS = "thermoworks_cloud"
+# An RFX probe that has sent nothing for this long is on its charger, or out of range
+RFX_STALE_AFTER = timedelta(minutes=5)
 
 
 @dataclass(frozen=True)
 class Layout:
-    """A known probe's reading and its sensors, in order from the tip."""
+    """A known probe's reading, its sensors in order from the tip, and how to tell it is reporting."""
 
     reading: str
     channels: list[str]
+    # The reading's attribute that holds when the probe last sent data, and how old it may be
+    seen_attribute: str | None = None
+    stale_after: timedelta | None = None
 
 
 def temperature_sensors(hass: HomeAssistant, device_id: str) -> list[str]:
@@ -58,4 +68,9 @@ def _rfx_meat(hass: HomeAssistant, device_id: str) -> Layout | None:
             channels[int(match.group(1))] = entry.entity_id
     if 0 not in channels:
         return None
-    return Layout(reading=channels[0], channels=[channels[n] for n in (1, 2, 3, 4) if n in channels])
+    return Layout(
+        reading=channels[0],
+        channels=[channels[n] for n in (1, 2, 3, 4) if n in channels],
+        seen_attribute="last_seen",
+        stale_after=RFX_STALE_AFTER,
+    )

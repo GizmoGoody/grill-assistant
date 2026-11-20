@@ -30,6 +30,7 @@ The [Grill Card](https://github.com/GizmoGoody/grill-card) shows it on a dashboa
 - A probe set to **turn on when it starts reporting** turns itself on, for example when an RFX probe comes off its charger. This is on by default for known probes such as the RFX MEAT.
 - The cook's start is the lowest reading since the probe was turned on. Once the probe is in the meat, that is the meat's own temperature. Progress runs from that start to the target.
 - A lost signal or a restart changes nothing. Turning the probe off ends the cook.
+- An RFX probe counts as reporting only while it sends new data. ThermoWorks Cloud keeps showing a probe's last value while it is on its charger, and that old value is treated as no reading.
 
 ## Entities
 
