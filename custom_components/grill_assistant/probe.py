@@ -1,10 +1,13 @@
-"""A probe's cook: its preset, its target and how it is coming along.
+"""A probe's cook: whether it is on, its preset, its target and how it is coming along.
 
-Each probe follows one temperature sensor, its reading. For a ThermoWorks
-RFX MEAT that is channel 0, the lowest of the probe's four sensors, which
-the ThermoWorks app shows by default. The cook (type, doneness, target and
-the temperature the cook started at) is kept in Home Assistant's storage, so
-every browser shows the same cook and it lasts across restarts.
+Each probe follows one temperature sensor, its reading. A cook runs from the
+moment the probe is turned on (its Active switch) until it is turned off.
+Its start is the lowest reading since it was turned on: once the probe is in
+the meat, that is the meat's own temperature, so a warm reading in the air
+before it went in does not count. The cook (on or off, type, doneness, target
+and start) is kept in Home Assistant's storage, so every browser shows the
+same cook and it lasts across restarts. A reading that goes blank for a while
+(a lost signal, a restart) changes nothing.
 """
 
 from __future__ import annotations
@@ -12,18 +15,29 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Callable
 from datetime import datetime, timedelta
-import re
 from typing import Any
 
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, UnitOfTemperature
 from homeassistant.core import CALLBACK_TYPE, Event, EventStateChangedData, HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 from homeassistant.util.unit_conversion import TemperatureConverter
 
-from .const import CUSTOM, DOMAIN, MANUAL, PRESETS, RATE_MIN_SPAN_S, RATE_WINDOW_S, STALL_RATE, THERMOWORKS
+from .const import (
+    CONF_AUTO_ON,
+    CONF_CHANNELS,
+    CONF_COLORS,
+    CONF_DEVICE,
+    CONF_READING,
+    CUSTOM,
+    DOMAIN,
+    MANUAL,
+    PRESETS,
+    RATE_MIN_SPAN_S,
+    RATE_WINDOW_S,
+    STALL_RATE,
+)
 
 SAMPLE_INTERVAL = timedelta(seconds=60)
 
@@ -55,44 +69,23 @@ class CookStore:
         self._store.async_delay_save(lambda: self.data, 2)
 
 
-def channels_of(hass: HomeAssistant, reading: str) -> list[str]:
-    """The probe's own sensors, in channel order.
-
-    A ThermoWorks probe's sensors share a unique ID that ends in the channel
-    number (thermoworks_cloud-<serial>-<channel>), and channel 0 is the
-    reading. Any other probe: the other temperature sensors on its device.
-    """
-    registry = er.async_get(hass)
-    entry = registry.async_get(reading)
-    if entry is None or entry.device_id is None:
-        return []
-    siblings = [
-        e for e in er.async_entries_for_device(registry, entry.device_id)
-        if e.domain == "sensor" and e.entity_id != reading
-    ]
-    if entry.platform == THERMOWORKS and (match := re.fullmatch(r"(.+)-(\d+)", entry.unique_id)):
-        prefix = re.escape(match.group(1))
-        found: dict[int, str] = {}
-        for sibling in siblings:
-            if (own := re.fullmatch(rf"{prefix}-(\d+)", sibling.unique_id)) and own.group(1) != match.group(2):
-                found[int(own.group(1))] = sibling.entity_id
-        return [found[channel] for channel in sorted(found)]
-    return sorted(
-        e.entity_id for e in siblings if (e.device_class or e.original_device_class) == "temperature"
-    )
-
-
 class Probe:
     """One probe's cook, worked out from its reading."""
 
-    def __init__(self, hass: HomeAssistant, store: CookStore, probe_id: str, data: dict[str, Any]) -> None:
+    def __init__(
+        self, hass: HomeAssistant, store: CookStore, probe_id: str, data: dict[str, Any], keep_last: bool
+    ) -> None:
         self.hass = hass
         self.id = probe_id
         self.store = store
-        self.reading_entity: str = data["reading"]
-        self.colors: list[str] = list(data.get("colors") or [])
-        self.tip_channel: int = int(data.get("tip_channel", 1))
+        self.device_id: str = data[CONF_DEVICE]
+        self.reading_entity: str = data[CONF_READING]
+        self.channels: list[str] = list(data.get(CONF_CHANNELS) or [])
+        self.colors: list[str] = list(data.get(CONF_COLORS) or [])
+        self.auto_on: bool = bool(data.get(CONF_AUTO_ON))
+        self.keep_last = keep_last
         saved = store.data.get(probe_id, {})
+        self.active: bool = saved.get("active", False)
         self.cook_type: str = saved.get("cook_type", MANUAL)
         self.doneness: str = saved.get("doneness", CUSTOM)
         self.target: float | None = saved.get("target")
@@ -106,9 +99,7 @@ class Probe:
     @callback
     def async_start(self) -> None:
         self._sample()
-        if self.start is None and self.reading is not None:
-            self.start = self.reading
-            self._save()
+        self._lower_start()
         self._unsubscribes.append(
             async_track_state_change_event(self.hass, [self.reading_entity], self._reading_changed)
         )
@@ -132,14 +123,14 @@ class Probe:
     @callback
     def _reading_changed(self, event: Event[EventStateChangedData]) -> None:
         old = event.data["old_state"]
-        was_in_use = old is not None and _number(old.state) is not None
+        # A probe that only reports once it is off its charger turns itself on.
+        # A first state (no old state) is a sensor being set up, not a probe
+        # taken off its charger, so it is left alone.
+        if self.auto_on and not self.active and old is not None and _number(old.state) is None and self.reading is not None:
+            self.set_active(True)
+            return
         self._sample()
-        # A probe put back into use starts a new cook from where it is now
-        if not was_in_use and self.reading is not None:
-            self._samples.clear()
-            self._sample()
-            self.start = self.reading
-            self._save()
+        self._lower_start()
         self._changed()
 
     @callback
@@ -158,6 +149,13 @@ class Probe:
         while self._samples and self._samples[0][0] < now - RATE_WINDOW_S:
             self._samples.popleft()
 
+    def _lower_start(self) -> None:
+        """The cook's start is the lowest reading since the probe was turned on."""
+        reading = self.reading
+        if self.active and reading is not None and (self.start is None or reading < self.start):
+            self.start = reading
+            self._save()
+
     # -- What the entities show -------------------------------------------
 
     @property
@@ -171,13 +169,14 @@ class Probe:
         return (state.attributes.get("unit_of_measurement") if state else None) or UnitOfTemperature.FAHRENHEIT
 
     @property
-    def in_use(self) -> bool:
-        return self.reading is not None
+    def cooking(self) -> bool:
+        """On, with a reading and a target: progress, done and stalled mean something."""
+        return self.active and self.reading is not None and self.target is not None
 
     @property
     def rate(self) -> float | None:
         """Degrees per minute: the slope of the readings over the last minutes."""
-        if len(self._samples) < 2 or self._samples[-1][0] - self._samples[0][0] < RATE_MIN_SPAN_S:
+        if not self.active or len(self._samples) < 2 or self._samples[-1][0] - self._samples[0][0] < RATE_MIN_SPAN_S:
             return None
         n = len(self._samples)
         mean_t = sum(t for t, _ in self._samples) / n
@@ -190,24 +189,24 @@ class Probe:
 
     @property
     def done(self) -> bool:
-        return self.reading is not None and self.target is not None and self.reading >= self.target
+        return self.cooking and self.reading >= self.target  # type: ignore[operator]
 
     @property
     def stalled(self) -> bool:
         rate = self.rate
-        return self.in_use and self.target is not None and not self.done and rate is not None and rate < STALL_RATE
+        return self.cooking and not self.done and rate is not None and rate < STALL_RATE
 
     @property
     def done_at(self) -> datetime | None:
         rate, reading = self.rate, self.reading
-        if self.target is None or reading is None or rate is None or rate < STALL_RATE or self.done:
+        if not self.cooking or rate is None or rate < STALL_RATE or self.done:
             return None
-        return dt_util.utcnow() + timedelta(minutes=(self.target - reading) / rate)
+        return dt_util.utcnow() + timedelta(minutes=(self.target - reading) / rate)  # type: ignore[operator]
 
     @property
     def progress(self) -> float | None:
         reading, start, target = self.reading, self.start, self.target
-        if reading is None or start is None or target is None or target <= start:
+        if not self.active or reading is None or start is None or target is None or target <= start:
             return None
         return max(0.0, min(100.0, (reading - start) / (target - start) * 100))
 
@@ -216,6 +215,22 @@ class Probe:
         return [*PRESETS.get(self.cook_type, {}), CUSTOM]
 
     # -- Changing the cook ------------------------------------------------
+
+    @callback
+    def set_active(self, active: bool) -> None:
+        """Turning a probe on starts a new cook; turning it off ends it."""
+        if active == self.active:
+            return
+        self.active = active
+        if active:
+            self.start = None
+            self._samples.clear()
+            if not self.keep_last:
+                self.cook_type, self.doneness, self.target = MANUAL, CUSTOM, None
+            self._sample()
+            self._lower_start()
+        self._save()
+        self._changed()
 
     def preset_target(self, cook_type: str, doneness: str) -> float | None:
         """A preset's target in the reading's unit."""
@@ -234,7 +249,8 @@ class Probe:
             self.set_doneness(next(iter(presets)), save=False)
         else:
             self.doneness = CUSTOM
-        self._new_cook()
+        self._save()
+        self._changed()
 
     @callback
     def set_doneness(self, doneness: str, save: bool = True) -> None:
@@ -256,15 +272,13 @@ class Probe:
         self._save()
         self._changed()
 
-    def _new_cook(self) -> None:
-        """A new cook starts from the reading now."""
-        self.start = self.reading
-        self._save()
-        self._changed()
-
     def _save(self) -> None:
         self.store.save(self.id, {
-            "cook_type": self.cook_type, "doneness": self.doneness, "target": self.target, "start": self.start,
+            "active": self.active,
+            "cook_type": self.cook_type,
+            "doneness": self.doneness,
+            "target": self.target,
+            "start": self.start,
         })
 
 

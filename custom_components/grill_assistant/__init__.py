@@ -1,7 +1,7 @@
 """Grill Assistant: the cook state of each meat probe on a grill.
 
 A grill is a config entry and each of its probes a config subentry. The
-integration keeps every probe's cook (type, doneness, target) as entities,
+integration keeps every probe's cook (on or off, type, doneness, target) as entities,
 so every browser shows the same cook at once and automations can use it.
 The Grill Card (a separate repository) shows them.
 """
@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN, PLATFORMS, SUBENTRY_PROBE
+from .const import CONF_KEEP_LAST, DOMAIN, PLATFORMS, SUBENTRY_PROBE
 from .probe import CookStore, Probe
 
 type GrillConfigEntry = ConfigEntry[dict[str, Probe]]
@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GrillConfigEntry) -> boo
     store = CookStore(hass, entry.entry_id)
     await store.async_load()
     probes = {
-        subentry_id: Probe(hass, store, subentry_id, dict(subentry.data))
+        subentry_id: Probe(hass, store, subentry_id, dict(subentry.data), entry.options.get(CONF_KEEP_LAST, True))
         for subentry_id, subentry in entry.subentries.items()
         if subentry.subentry_type == SUBENTRY_PROBE
     }
@@ -35,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GrillConfigEntry) -> boo
         probe.async_start()
         entry.async_on_unload(probe.async_stop)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    # A probe added, changed or removed sets the grill up again
+    # A probe added, changed or removed, or the grill's options changed, sets the grill up again
     entry.async_on_unload(entry.add_update_listener(_async_reload))
     return True
 

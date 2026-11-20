@@ -5,7 +5,11 @@
         "title": "Add a grill",
         "description": "A grill holds your meat probes. After it is added, add each probe to it.",
         "data": {
-          "name": "Name"
+          "name": "Name",
+          "grill_sensors": "Grill temperature sensors"
+        },
+        "data_description": {
+          "grill_sensors": "Sensors that read the grill itself, such as an ambient or dome probe. Optional."
         }
       }
     }
@@ -19,32 +23,49 @@
       "step": {
         "user": {
           "title": "Add a probe",
-          "description": "Choose the probe's reading. For a ThermoWorks RFX MEAT, that is its channel 0, the lowest of its four sensors.",
+          "description": "Choose the probe that goes in the meat. Only devices with a temperature sensor are listed.",
           "data": {
-            "reading": "Reading",
-            "colors": "Probe colors",
-            "tip_channel": "Sensor at the tip"
+            "device": "Probe",
+            "colors": "Probe colors"
           },
           "data_description": {
-            "reading": "The temperature sensor the probe's cook follows.",
-            "colors": "The colored bands on the probe, in order. The Grill card shows the probe in these colors.",
-            "tip_channel": "Which of the probe's four sensors is nearest its tip. The Grill card lists the sensors in order from the tip."
+            "device": "Its temperature sensors are found on the device.",
+            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Grill Card shows the probe in these colors."
+          }
+        },
+        "sensors": {
+          "title": "Choose the probe's sensors",
+          "description": "{device} has several temperature sensors.",
+          "data": {
+            "reading": "Reading",
+            "channels": "Sensors from the tip",
+            "auto_on": "Turn on when it starts reporting"
+          },
+          "data_description": {
+            "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
+            "channels": "The probe's sensors, in order from the tip. The Grill Card lists them in this order.",
+            "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time."
           }
         },
         "reconfigure": {
           "title": "Change the probe",
           "data": {
             "colors": "Probe colors",
-            "tip_channel": "Sensor at the tip"
+            "auto_on": "Turn on when it starts reporting",
+            "reading": "Reading",
+            "channels": "Sensors from the tip"
           },
           "data_description": {
-            "colors": "The colored bands on the probe, in order. The Grill card shows the probe in these colors.",
-            "tip_channel": "Which of the probe's four sensors is nearest its tip. The Grill card lists the sensors in order from the tip."
+            "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Grill Card shows the probe in these colors.",
+            "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time.",
+            "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
+            "channels": "The probe's sensors, in order from the tip. The Grill Card lists them in this order."
           }
         }
       },
       "error": {
-        "already_added": "This sensor is already a probe of this grill."
+        "already_added": "This probe is already on this grill.",
+        "no_temperature": "This device has no temperature sensor."
       },
       "abort": {
         "reconfigure_successful": "The probe was changed."
@@ -52,6 +73,19 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "done": {
+        "name": "Done"
+      },
+      "stalled": {
+        "name": "Stalled"
+      }
+    },
+    "number": {
+      "target": {
+        "name": "Target"
+      }
+    },
     "select": {
       "cook_type": {
         "name": "Cook type",
@@ -82,11 +116,6 @@
         }
       }
     },
-    "number": {
-      "target": {
-        "name": "Target"
-      }
-    },
     "sensor": {
       "progress": {
         "name": "Progress"
@@ -96,14 +125,14 @@
       },
       "done_at": {
         "name": "Done at"
+      },
+      "active_probes": {
+        "name": "Active probes"
       }
     },
-    "binary_sensor": {
-      "done": {
-        "name": "Done"
-      },
-      "stalled": {
-        "name": "Stalled"
+    "switch": {
+      "active": {
+        "name": "Active"
       }
     }
   },
@@ -131,11 +160,20 @@
         "black": "Black",
         "white": "White"
       }
-    },
-    "tip_channel": {
-      "options": {
-        "1": "Channel 1",
-        "4": "Channel 4"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Grill options",
+        "data": {
+          "grill_sensors": "Grill temperature sensors",
+          "keep_last": "Keep the last cook type and doneness"
+        },
+        "data_description": {
+          "grill_sensors": "Sensors that read the grill itself, such as an ambient or dome probe. Optional.",
+          "keep_last": "When a probe is turned on for a new cook, keep the cook type, doneness and target it had last time. Turn this off to start each cook blank."
+        }
       }
     }
   }
