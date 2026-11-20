@@ -1,6 +1,9 @@
 {
   "domain": "grill_assistant",
   "name": "Grill Assistant",
+  "categories": [
+    "appliances_cleaning.cooking"
+  ],
   "codeowners": [
     "@GizmoGoody"
   ],
