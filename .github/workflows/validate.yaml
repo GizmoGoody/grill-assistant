@@ -22,7 +22,8 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          # A new integration has no brand images in home-assistant/brands yet
+          # The brand images ship in the integration's own brand folder,
+          # not in the home-assistant/brands repository
           ignore: brands
 
   tests:
