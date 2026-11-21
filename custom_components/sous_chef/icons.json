@@ -1,15 +1,24 @@
 {
   "entity": {
     "select": {
-      "cook_type": {
-        "default": "mdi:food-steak",
+      "source": {
+        "default": "mdi:book-open-variant"
+      },
+      "food_type": {
+        "default": "mdi:food",
         "state": {
-          "beef": "mdi:cow",
-          "ground_beef": "mdi:hamburger",
+          "beef": "mdi:food-steak",
+          "ground_meat": "mdi:hamburger",
           "pork": "mdi:pig",
+          "ham": "mdi:pig-variant",
+          "bbq": "mdi:grill",
           "poultry": "mdi:food-drumstick",
-          "seafood": "mdi:fish",
-          "manual": "mdi:thermometer-probe"
+          "game": "mdi:deer",
+          "fish": "mdi:fish",
+          "shellfish": "mdi:fish",
+          "eggs": "mdi:egg",
+          "leftovers": "mdi:pot-steam",
+          "other": "mdi:thermometer-probe"
         }
       },
       "doneness": {
@@ -19,6 +28,15 @@
     "number": {
       "target": {
         "default": "mdi:target"
+      },
+      "pull_early": {
+        "default": "mdi:timer-sand"
+      },
+      "alarm_high": {
+        "default": "mdi:thermometer-chevron-up"
+      },
+      "alarm_low": {
+        "default": "mdi:thermometer-chevron-down"
       }
     },
     "sensor": {
@@ -31,8 +49,8 @@
       "done_at": {
         "default": "mdi:timer-check-outline"
       },
-      "active_probes": {
-        "default": "mdi:grill"
+      "max": {
+        "default": "mdi:thermometer-high"
       }
     },
     "binary_sensor": {
@@ -46,6 +64,12 @@
         "default": "mdi:play-circle-outline",
         "state": {
           "on": "mdi:pause-circle"
+        }
+      },
+      "alarm": {
+        "default": "mdi:bell-outline",
+        "state": {
+          "on": "mdi:bell-alert"
         }
       }
     },

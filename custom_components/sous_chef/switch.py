@@ -15,7 +15,7 @@ from .entity import ProbeEntity
 async def async_setup_entry(
     hass: HomeAssistant, entry: SousChefConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
-    for subentry_id, probe in entry.runtime_data.items():
+    for subentry_id, probe in entry.runtime_data.probes.items():
         async_add_entities(
             [ActiveSwitch(hass, entry.subentries[subentry_id], probe, "active")], config_subentry_id=subentry_id
         )

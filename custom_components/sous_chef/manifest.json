@@ -10,9 +10,10 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/GizmoGoody/sous-chef",
-  "integration_type": "helper",
+  "integration_type": "hub",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/GizmoGoody/sous-chef/issues",
   "requirements": [],
-  "version": "0.1.0-alpha.3"
+  "single_config_entry": true,
+  "version": "0.2.0-alpha.1"
 }

@@ -1,4 +1,4 @@
-"""Fixtures for the Grill tests."""
+"""Fixtures for the Sous Chef tests."""
 
 import pytest
 
