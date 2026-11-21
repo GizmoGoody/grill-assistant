@@ -92,8 +92,6 @@ SOURCES = [
             "pork": {"safe_minimum": Level(145, 63, rest_minutes=3)},
             "poultry": {"safe_minimum": Level(165, 74)},
             "fish": {"safe_minimum": Level(145, 63)},
-            "eggs": {"safe_minimum": Level(160, 71)},
-            "leftovers": {"safe_minimum": Level(165, 74)},
         },
     ),
     Source(
