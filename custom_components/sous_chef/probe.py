@@ -45,7 +45,7 @@ from .const import (
     STALL_RATE_F,
 )
 from .presets import CUSTOM, OTHER, Catalog, Level
-from .profiles import known_layout
+from .profiles import freshness
 
 SAMPLE_INTERVAL = timedelta(seconds=60)
 
@@ -115,9 +115,9 @@ class Followed:
         self.id = subentry_id
         self.store = store
         self.device_id = device_id
-        layout = known_layout(hass, device_id)
-        self._seen_attribute = layout.seen_attribute if layout else None
-        self._stale_after = layout.stale_after if layout else None
+        fresh = freshness(hass, device_id)
+        self._seen_attribute = fresh.attribute if fresh else None
+        self._stale_after = fresh.stale_after if fresh else None
         self._listeners: list[CALLBACK_TYPE] = []
         self._unsubscribes: list[CALLBACK_TYPE] = []
 
