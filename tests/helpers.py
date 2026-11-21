@@ -22,7 +22,7 @@ def _source(hass: HomeAssistant) -> MockConfigEntry:
 
 
 def rfx_meat(hass: HomeAssistant, name: str = "Probe", serial: str = "M1") -> tuple[str, list[str]]:
-    """A ThermoWorks RFX MEAT: channel 0 (its core), channels 1 to 4 and an alarm threshold.
+    """A ThermoWorks RFX MEAT: channel 0 (its internal temperature), channels 1 to 4 and an alarm threshold.
 
     Returns the device and its channels 0 to 4.
     """
@@ -78,3 +78,31 @@ def other_probe(hass: HomeAssistant, name: str, sensors: int) -> tuple[str, list
         for n in range(sensors)
     ]
     return device.id, entities
+
+
+def rfx_gateway(hass: HomeAssistant, serial: str = "G1") -> tuple[str, str]:
+    """A ThermoWorks RFX Gateway: its ambient channel 1, and that channel's alarm thresholds.
+
+    Returns the device and its ambient sensor.
+    """
+    source = _source(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=source.entry_id,
+        identifiers={("thermoworks_cloud", serial)},
+        manufacturer="ThermoWorks",
+        model="rfx gateway",
+        name="RFX Gateway",
+    )
+    registry = er.async_get(hass)
+    ambient, *_ = (
+        registry.async_get_or_create(
+            "sensor",
+            "thermoworks_cloud",
+            f"thermoworks_cloud-{serial}-1{suffix}",
+            config_entry=source,
+            device_id=device.id,
+            original_device_class="temperature",
+        ).entity_id
+        for suffix in ("", "-high-alarm-threshold", "-low-alarm-threshold")
+    )
+    return device.id, ambient

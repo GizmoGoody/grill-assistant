@@ -7,7 +7,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.sous_chef.const import DOMAIN
 
-from .helpers import other_probe, rfx_meat
+from .helpers import other_probe, rfx_gateway, rfx_meat
 
 
 async def _sous_chef(hass: HomeAssistant) -> MockConfigEntry:
@@ -135,6 +135,16 @@ async def test_ambient_sensors(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     result = await _add(hass, entry, "ambient", {"device": device})
     assert result["errors"] == {"device": "already_added"}
+
+
+async def test_alarm_thresholds_are_no_ambient_sensor(hass: HomeAssistant) -> None:
+    entry = await _sous_chef(hass)
+    device, ambient = rfx_gateway(hass)
+    # The gateway's alarm thresholds are temperature sensors too, but read no temperature
+    result = await _add(hass, entry, "ambient", {"device": device})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    (subentry,) = entry.subentries.values()
+    assert subentry.data == {"device": device, "sensor": ambient}
 
 
 async def test_food_of_your_own(hass: HomeAssistant) -> None:
