@@ -1,6 +1,4 @@
-"""Constants for the Sous Chef integration."""
-
-from __future__ import annotations
+"""Constants for Sous Chef."""
 
 from homeassistant.const import Platform
 
@@ -8,40 +6,60 @@ DOMAIN = "sous_chef"
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
-# A grill's options
-CONF_GRILL_SENSORS = "grill_sensors"
+# The entry's options
 CONF_KEEP_LAST = "keep_last"
 
-# A probe is a config subentry of a grill
+# The kinds of subentry
 SUBENTRY_PROBE = "probe"
+SUBENTRY_AMBIENT = "ambient"
+SUBENTRY_FOOD = "food"
+
+# A probe's and an ambient sensor's data
 CONF_DEVICE = "device"
-CONF_READING = "reading"
+CONF_INTERNAL = "internal"
 CONF_CHANNELS = "channels"
 CONF_COLORS = "colors"
 CONF_AUTO_ON = "auto_on"
+CONF_SENSOR = "sensor"
 
-# Doneness for a target that matches no preset of the cook type
-CUSTOM = "custom"
-MANUAL = "manual"
+# A food's data
+CONF_NAME = "name"
+CONF_ICON = "icon"
+CONF_LEVELS = "levels"
+CONF_TEMPERATURE = "temperature"
+CONF_UNIT = "unit"
 
-# Built-in cook presets, in °F: cook type -> doneness -> target
-PRESETS: dict[str, dict[str, int]] = {
-    "beef": {"rare": 125, "medium_rare": 135, "medium": 145, "medium_well": 155, "well_done": 165},
-    "ground_beef": {"well_done": 160},
-    "pork": {"medium": 145, "well_done": 160},
-    "poultry": {"done": 165},
-    "seafood": {"tuna": 130, "salmon": 145, "shrimp": 145, "scallops": 145, "lobster": 145},
-    MANUAL: {},
-}
-
-# The colors a probe can be marked with (Home Assistant's named colors)
+# Home Assistant's named colors, for a probe's colored bands
 COLORS = [
-    "red", "pink", "purple", "deep-purple", "indigo", "blue", "light-blue", "cyan", "teal", "green",
-    "light-green", "lime", "yellow", "amber", "orange", "deep-orange", "brown", "grey", "black", "white",
+    "red",
+    "pink",
+    "purple",
+    "deep-purple",
+    "indigo",
+    "blue",
+    "light-blue",
+    "cyan",
+    "teal",
+    "green",
+    "light-green",
+    "lime",
+    "yellow",
+    "amber",
+    "orange",
+    "deep-orange",
+    "brown",
+    "grey",
+    "black",
+    "white",
 ]
 
-# How far back the rate looks, and the least time it needs to work one out
-RATE_WINDOW_S = 600
+# The rate: the window holds at least this many values over at least the
+# shortest span, and grows until the temperature has moved enough to measure
+# or the window reaches the longest span
+RATE_MIN_SAMPLES = 3
 RATE_MIN_SPAN_S = 120
-# Below this rate (degrees per minute) a probe short of its target is stalled
-STALL_RATE = 0.05
+RATE_MAX_SPAN_S = 900
+RATE_MIN_CHANGE = 2.0
+
+# Rising less than this many °F a minute short of the target is a stall
+STALL_RATE_F = 0.05

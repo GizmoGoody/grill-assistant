@@ -1,10 +1,10 @@
 """How a probe device's temperature sensors are laid out.
 
 Most probe devices have one temperature sensor, and that sensor is the
-reading. A known probe is one whose layout is built in, so it needs no
-questions: a ThermoWorks RFX MEAT reports its core as channel 0 (the lowest
-of its four sensors) and its sensors as channels 1 to 4, with channel 1 at
-the tip.
+internal temperature. A known probe is one whose layout is built in, so it
+needs no questions: a ThermoWorks RFX MEAT reports its internal temperature
+as channel 0 (the lowest of its four sensors) and its sensors as channels 1
+to 4, with channel 1 at the tip.
 
 A known probe can also say how to tell that it is reporting. ThermoWorks
 Cloud keeps showing a probe's last value while it sits on its charger, so an
@@ -27,11 +27,11 @@ RFX_STALE_AFTER = timedelta(minutes=5)
 
 @dataclass(frozen=True)
 class Layout:
-    """A known probe's reading, its sensors in order from the tip, and how to tell it is reporting."""
+    """A known probe's internal temperature, its sensors in order from the tip, and how to tell it is reporting."""
 
-    reading: str
+    internal: str
     channels: list[str]
-    # The reading's attribute that holds when the probe last sent data, and how old it may be
+    # The sensors' attribute that holds when the probe last sent data, and how old it may be
     seen_attribute: str | None = None
     stale_after: timedelta | None = None
 
@@ -69,7 +69,7 @@ def _rfx_meat(hass: HomeAssistant, device_id: str) -> Layout | None:
     if 0 not in channels:
         return None
     return Layout(
-        reading=channels[0],
+        internal=channels[0],
         channels=[channels[n] for n in (1, 2, 3, 4) if n in channels],
         seen_attribute="last_seen",
         stale_after=RFX_STALE_AFTER,

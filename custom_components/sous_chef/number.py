@@ -1,50 +1,85 @@
-"""A probe's target temperature."""
+"""A probe's target, Pull early by and alarm limits, and an ambient sensor's alarm limits.
+
+An alarm limit of 0 is no limit, and shows as unknown.
+"""
 
 from __future__ import annotations
 
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import SousChefConfigEntry
-from .entity import ProbeEntity
+from .entity import AmbientEntity, ProbeEntity
+
+# The largest value of each kind of number, in °F and in °C
+PROBE_MAX = {UnitOfTemperature.FAHRENHEIT: 250, UnitOfTemperature.CELSIUS: 120}
+AMBIENT_MAX = {UnitOfTemperature.FAHRENHEIT: 1000, UnitOfTemperature.CELSIUS: 540}
+PULL_EARLY_MAX = {UnitOfTemperature.FAHRENHEIT: 30, UnitOfTemperature.CELSIUS: 15}
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: SousChefConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
-    for subentry_id, probe in entry.runtime_data.items():
+    for subentry_id, probe in entry.runtime_data.probes.items():
+        subentry = entry.subentries[subentry_id]
         async_add_entities(
-            [TargetNumber(hass, entry.subentries[subentry_id], probe, "target")], config_subentry_id=subentry_id
+            [
+                TargetNumber(hass, subentry, probe, "target"),
+                PullEarlyNumber(hass, subentry, probe, "pull_early"),
+                ProbeLimitNumber(hass, subentry, probe, "alarm_high"),
+                ProbeLimitNumber(hass, subentry, probe, "alarm_low"),
+            ],
+            config_subentry_id=subentry_id,
+        )
+    for subentry_id, ambient in entry.runtime_data.ambients.items():
+        subentry = entry.subentries[subentry_id]
+        async_add_entities(
+            [
+                AmbientLimitNumber(hass, subentry, ambient, "alarm_high"),
+                AmbientLimitNumber(hass, subentry, ambient, "alarm_low"),
+            ],
+            config_subentry_id=subentry_id,
         )
 
 
-class TargetNumber(ProbeEntity, NumberEntity):
-    """The temperature the probe's reading is cooking to.
+class TemperatureNumber(NumberEntity):
+    """A temperature setting, in its sensor's unit."""
+
+    _attr_device_class = NumberDeviceClass.TEMPERATURE
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_mode = NumberMode.BOX
+    _attr_native_step = 1
+    _maximum: dict[str, float] = PROBE_MAX
+
+    @property
+    def unit(self) -> str:
+        raise NotImplementedError
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        return self.unit
+
+    @property
+    def native_max_value(self) -> float:
+        return self._maximum.get(self.unit, self._maximum[UnitOfTemperature.CELSIUS])
+
+
+class TargetNumber(ProbeEntity, TemperatureNumber):
+    """The temperature the probe's internal temperature is cooking to.
 
     Choosing a doneness sets it; setting it to any other value makes the
     doneness Custom.
     """
 
-    _attr_device_class = NumberDeviceClass.TEMPERATURE
-    _attr_mode = NumberMode.BOX
-
     @property
-    def native_unit_of_measurement(self) -> str:
+    def unit(self) -> str:
         return self.probe.unit
 
     @property
     def native_min_value(self) -> float:
-        return 32 if self.probe.unit == UnitOfTemperature.FAHRENHEIT else 0
-
-    @property
-    def native_max_value(self) -> float:
-        return 250 if self.probe.unit == UnitOfTemperature.FAHRENHEIT else 120
-
-    @property
-    def native_step(self) -> float:
-        return 1
+        return 32 if self.unit == UnitOfTemperature.FAHRENHEIT else 0
 
     @property
     def native_value(self) -> float | None:
@@ -52,3 +87,73 @@ class TargetNumber(ProbeEntity, NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         self.probe.set_target(value)
+
+
+class PullEarlyNumber(ProbeEntity, NumberEntity):
+    """Done turns on this many degrees before the target, for carryover while the food rests.
+
+    A difference of degrees, so it has no temperature device class: Home
+    Assistant would convert it as a temperature.
+    """
+
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_mode = NumberMode.BOX
+    _attr_native_step = 1
+    _attr_native_min_value = 0
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        return self.probe.unit
+
+    @property
+    def native_max_value(self) -> float:
+        return PULL_EARLY_MAX.get(self.probe.unit, PULL_EARLY_MAX[UnitOfTemperature.CELSIUS])
+
+    @property
+    def native_value(self) -> float:
+        return self.probe.pull_early
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.probe.set_pull_early(value)
+
+
+class LimitNumber(TemperatureNumber):
+    """An alarm limit. 0 is no limit."""
+
+    _attr_native_min_value = 0
+
+    @property
+    def _high(self) -> bool:
+        return self.translation_key == "alarm_high"
+
+
+class ProbeLimitNumber(ProbeEntity, LimitNumber):
+    """The internal temperature must stay below Alarm high and above Alarm low while the probe is on."""
+
+    @property
+    def unit(self) -> str:
+        return self.probe.unit
+
+    @property
+    def native_value(self) -> float | None:
+        return self.probe.limits.high if self._high else self.probe.limits.low
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.probe.set_limit(self._high, value or None)
+
+
+class AmbientLimitNumber(AmbientEntity, LimitNumber):
+    """The ambient temperature must stay below Alarm high and above Alarm low."""
+
+    _maximum = AMBIENT_MAX
+
+    @property
+    def unit(self) -> str:
+        return self.ambient.unit
+
+    @property
+    def native_value(self) -> float | None:
+        return self.ambient.limits.high if self._high else self.ambient.limits.low
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.ambient.set_limit(self._high, value or None)

@@ -2,16 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Add a grill",
-        "description": "A grill holds your meat probes. After it is added, add each probe to it.",
-        "data": {
-          "name": "Name",
-          "grill_sensors": "Grill temperature sensors"
-        },
-        "data_description": {
-          "grill_sensors": "Sensors that read the grill itself, such as an ambient or dome probe. Optional."
-        }
+        "title": "Set up Sous Chef",
+        "description": "Sous Chef holds all your probes and ambient sensors. After it is set up, add each probe, each ambient sensor and any food of your own on its page."
       }
+    },
+    "abort": {
+      "single_instance_allowed": "Sous Chef is already set up. Add probes, ambient sensors and foods on its page."
     }
   },
   "config_subentries": {
@@ -23,7 +19,7 @@
       "step": {
         "user": {
           "title": "Add a probe",
-          "description": "Choose the probe that goes in the meat. Only devices with a temperature sensor are listed.",
+          "description": "Choose the probe that goes in the food. Only devices with a temperature sensor are listed.",
           "data": {
             "device": "Probe",
             "colors": "Probe colors"
@@ -37,13 +33,13 @@
           "title": "Choose the probe's sensors",
           "description": "{device} has several temperature sensors.",
           "data": {
-            "reading": "Reading",
-            "channels": "Sensors from the tip",
+            "internal": "Internal temperature",
+            "channels": "Channels from the tip",
             "auto_on": "Turn on when it starts reporting"
           },
           "data_description": {
-            "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
-            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order.",
+            "internal": "The one sensor that stands for the inside of the food. Leave it empty to use the lowest of the channels.",
+            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order, and Max is the highest of them.",
             "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time."
           }
         },
@@ -52,23 +48,98 @@
           "data": {
             "colors": "Probe colors",
             "auto_on": "Turn on when it starts reporting",
-            "reading": "Reading",
-            "channels": "Sensors from the tip"
+            "internal": "Internal temperature",
+            "channels": "Channels from the tip"
           },
           "data_description": {
             "colors": "The colored bands on the probe, in order. Choose several for a striped probe. The Sous Chef Card shows the probe in these colors.",
             "auto_on": "Turn the probe on by itself when it starts reporting, such as when it comes off its charger. Leave this off for a probe that reports all the time.",
-            "reading": "The sensor the cook follows. For a probe with several sensors, this is usually the lowest one, the core.",
-            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order."
+            "internal": "The one sensor that stands for the inside of the food. Leave it empty to use the lowest of the channels.",
+            "channels": "The probe's sensors, in order from the tip. The Sous Chef Card lists them in this order, and Max is the highest of them."
           }
         }
       },
       "error": {
-        "already_added": "This probe is already on this grill.",
-        "no_temperature": "This device has no temperature sensor."
+        "already_added": "This probe is already added.",
+        "no_temperature": "This device has no temperature sensor.",
+        "no_internal": "Choose the internal temperature, or at least two channels to use the lowest of."
       },
       "abort": {
         "reconfigure_successful": "The probe was changed."
+      }
+    },
+    "ambient": {
+      "entry_type": "Ambient sensor",
+      "initiate_flow": {
+        "user": "Add ambient sensor"
+      },
+      "step": {
+        "user": {
+          "title": "Add an ambient sensor",
+          "description": "The air in a grill, pit or oven. It gets alarms, no food and no target. Only devices with a temperature sensor are listed.",
+          "data": {
+            "device": "Device"
+          },
+          "data_description": {
+            "device": "Its temperature sensor is found on the device."
+          }
+        },
+        "sensor": {
+          "title": "Choose the ambient sensor",
+          "description": "{device} has several temperature sensors.",
+          "data": {
+            "sensor": "Sensor"
+          },
+          "data_description": {
+            "sensor": "The sensor that reads the air."
+          }
+        }
+      },
+      "error": {
+        "already_added": "Every temperature sensor on this device is already added.",
+        "no_temperature": "This device has no temperature sensor."
+      }
+    },
+    "food": {
+      "entry_type": "Food",
+      "initiate_flow": {
+        "user": "Add food"
+      },
+      "step": {
+        "user": {
+          "title": "Add a food",
+          "description": "A food no chart lists, with your own doneness levels. Choose it with the source Mine.",
+          "data": {
+            "name": "Name",
+            "icon": "Icon",
+            "levels": "Doneness levels"
+          },
+          "data_description": {
+            "name": "What is cooking, such as Brisket.",
+            "icon": "Shown for this food. Optional.",
+            "levels": "Each level has a name, such as Probe tender, and its temperature in {unit}. Choosing one sets the target."
+          }
+        },
+        "reconfigure": {
+          "title": "Change the food",
+          "data": {
+            "name": "Name",
+            "icon": "Icon",
+            "levels": "Doneness levels"
+          },
+          "data_description": {
+            "name": "What is cooking, such as Brisket.",
+            "icon": "Shown for this food. Optional.",
+            "levels": "Each level has a name, such as Probe tender, and its temperature in {unit}. Choosing one sets the target."
+          }
+        }
+      },
+      "error": {
+        "name_taken": "There is already a food with this name.",
+        "bad_levels": "Each doneness level needs its own name, other than Custom."
+      },
+      "abort": {
+        "reconfigure_successful": "The food was changed."
       }
     }
   },
@@ -79,23 +150,52 @@
       },
       "stalled": {
         "name": "Stalled"
+      },
+      "alarm": {
+        "name": "Alarm"
       }
     },
     "number": {
       "target": {
         "name": "Target"
+      },
+      "pull_early": {
+        "name": "Pull early by"
+      },
+      "alarm_high": {
+        "name": "Alarm high"
+      },
+      "alarm_low": {
+        "name": "Alarm low"
       }
     },
     "select": {
-      "cook_type": {
-        "name": "Cook type",
+      "source": {
+        "name": "Source",
         "state": {
-          "beef": "Beef",
-          "ground_beef": "Ground beef",
+          "foodsafety_gov": "FoodSafety.gov (Safe Minimum Internal Temperatures)",
+          "health_canada": "Health Canada (Safe Cooking Temperatures)",
+          "uk_fsa": "UK Food Standards Agency (Cooking Your Food)",
+          "fsanz": "FSANZ (Food Safety Basics)",
+          "thermoworks": "ThermoWorks (Chef-Recommended Temps)",
+          "mine": "Mine"
+        }
+      },
+      "food_type": {
+        "name": "Food type",
+        "state": {
+          "beef": "Beef, veal and lamb",
+          "ground_meat": "Ground meat",
           "pork": "Pork",
+          "ham": "Ham",
+          "bbq": "Brisket, ribs and pork butt",
           "poultry": "Poultry",
-          "seafood": "Seafood",
-          "manual": "Manual"
+          "game": "Game meat",
+          "fish": "Fish",
+          "shellfish": "Shellfish",
+          "eggs": "Egg dishes",
+          "leftovers": "Leftovers and casseroles",
+          "other": "Other"
         }
       },
       "doneness": {
@@ -106,12 +206,17 @@
           "medium": "Medium",
           "medium_well": "Medium well",
           "well_done": "Well done",
+          "safe_minimum": "Safe minimum",
+          "cooked_through": "Cooked through",
+          "usda_done": "USDA done",
           "done": "Done",
-          "tuna": "Tuna",
-          "salmon": "Salmon",
-          "shrimp": "Shrimp",
-          "scallops": "Scallops",
-          "lobster": "Lobster",
+          "raw": "Raw",
+          "precooked": "Precooked",
+          "pieces": "Pieces",
+          "whole": "Whole",
+          "dark_meat": "Dark meat",
+          "tuna_swordfish_marlin": "Tuna, swordfish or marlin",
+          "other_fish": "Other fish",
           "custom": "Custom"
         }
       }
@@ -126,8 +231,8 @@
       "done_at": {
         "name": "Done at"
       },
-      "active_probes": {
-        "name": "Active probes"
+      "max": {
+        "name": "Max"
       }
     },
     "switch": {
@@ -160,19 +265,27 @@
         "black": "Black",
         "white": "White"
       }
+    },
+    "levels": {
+      "fields": {
+        "name": {
+          "name": "Doneness"
+        },
+        "temperature": {
+          "name": "Temperature"
+        }
+      }
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Grill options",
+        "title": "Sous Chef options",
         "data": {
-          "grill_sensors": "Grill temperature sensors",
-          "keep_last": "Keep the last cook type and doneness"
+          "keep_last": "Keep the last source, food and doneness"
         },
         "data_description": {
-          "grill_sensors": "Sensors that read the grill itself, such as an ambient or dome probe. Optional.",
-          "keep_last": "When a probe is turned on for a new cook, keep the cook type, doneness and target it had last time. Turn this off to start each cook blank."
+          "keep_last": "When a probe is turned on for a new cook, keep the source, food type, doneness and target it had last time. Turn this off to start each cook blank."
         }
       }
     }

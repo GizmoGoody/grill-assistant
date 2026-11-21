@@ -1,4 +1,4 @@
-"""How a probe's cook is coming along (progress, rate, when it is done), and how many probes are on."""
+"""How a probe's cook is coming along (progress, rate, when it is done), and its hottest channel."""
 
 from __future__ import annotations
 
@@ -8,43 +8,41 @@ from typing import Any
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import SousChefConfigEntry
-from .const import CONF_GRILL_SENSORS, DOMAIN
 from .entity import ProbeEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: SousChefConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
-    for subentry_id, probe in entry.runtime_data.items():
+    for subentry_id, probe in entry.runtime_data.probes.items():
         subentry = entry.subentries[subentry_id]
-        async_add_entities(
-            [
-                ProgressSensor(hass, subentry, probe, "progress"),
-                RateSensor(hass, subentry, probe, "rate"),
-                DoneAtSensor(hass, subentry, probe, "done_at"),
-            ],
-            config_subentry_id=subentry_id,
-        )
-    async_add_entities([ActiveProbesSensor(entry)])
+        entities: list[SensorEntity] = [
+            ProgressSensor(hass, subentry, probe, "progress"),
+            RateSensor(hass, subentry, probe, "rate"),
+            DoneAtSensor(hass, subentry, probe, "done_at"),
+        ]
+        # Only a probe with channels has a hottest one
+        if probe.channels:
+            entities.append(MaxSensor(hass, subentry, probe, "max"))
+        async_add_entities(entities, config_subentry_id=subentry_id)
 
 
 class ProgressSensor(ProbeEntity, SensorEntity):
-    """How far the reading has come from the cook's start to the target.
+    """How far the internal temperature has come from the cook's start to the target.
 
-    Its attributes tell the Sous Chef Card which probe this is: the reading, the
-    probe's own sensors in order from the tip, its colors and the cook's start.
+    Its attributes tell the Sous Chef Card which probe this is: its internal
+    temperature (an entity ID, or empty for the lowest of the channels), its
+    channels in order from the tip, its colors and the cook's start.
     """
 
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 0
     # They describe the probe, not the cook, so the recorder leaves them out
-    _unrecorded_attributes = frozenset({"reading", "channels", "colors", "start"})
+    _unrecorded_attributes = frozenset({"internal", "channels", "colors", "start"})
 
     @property
     def native_value(self) -> float | None:
@@ -53,7 +51,7 @@ class ProgressSensor(ProbeEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
-            "reading": self.probe.reading_entity,
+            "internal": self.probe.internal,
             "channels": self.probe.channels,
             "colors": self.probe.colors,
             "start": self.probe.start,
@@ -61,7 +59,7 @@ class ProgressSensor(ProbeEntity, SensorEntity):
 
 
 class RateSensor(ProbeEntity, SensorEntity):
-    """How fast the reading is rising, in degrees per minute."""
+    """How fast the internal temperature is rising, in degrees per minute."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 1
@@ -76,7 +74,7 @@ class RateSensor(ProbeEntity, SensorEntity):
 
 
 class DoneAtSensor(ProbeEntity, SensorEntity):
-    """When the reading will reach the target at its current rate."""
+    """When the internal temperature will reach the target, less Pull early by, at its current rate."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
 
@@ -85,37 +83,16 @@ class DoneAtSensor(ProbeEntity, SensorEntity):
         return self.probe.done_at
 
 
-class ActiveProbesSensor(SensorEntity):
-    """How many of the grill's probes are on, on the grill's own device.
+class MaxSensor(ProbeEntity, SensorEntity):
+    """The highest of the probe's channels right now, whichever it is."""
 
-    Its attributes tell the Sous Chef Card what is on the grill: the grill's own
-    sensors, and each probe's progress sensor.
-    """
-
-    _attr_has_entity_name = True
-    _attr_should_poll = False
-    _attr_translation_key = "active_probes"
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _unrecorded_attributes = frozenset({"grill_sensors", "probes"})
-
-    def __init__(self, entry: SousChefConfigEntry) -> None:
-        self._entry = entry
-        self._attr_unique_id = f"{entry.entry_id}_active_probes"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry.entry_id)}, name=entry.title)
-
-    async def async_added_to_hass(self) -> None:
-        for probe in self._entry.runtime_data.values():
-            self.async_on_remove(probe.async_add_listener(self.async_write_ha_state))
 
     @property
-    def native_value(self) -> int:
-        return sum(probe.active for probe in self._entry.runtime_data.values())
+    def native_unit_of_measurement(self) -> str:
+        return self.probe.unit
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        registry = er.async_get(self.hass)
-        progress = (registry.async_get_entity_id("sensor", DOMAIN, f"{probe_id}_progress") for probe_id in self._entry.runtime_data)
-        return {
-            "grill_sensors": list(self._entry.options.get(CONF_GRILL_SENSORS, [])),
-            "probes": [entity_id for entity_id in progress if entity_id],
-        }
+    def native_value(self) -> float | None:
+        return self.probe.max
