@@ -15,10 +15,12 @@ from dataclasses import dataclass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_KEEP_LAST, DOMAIN, PLATFORMS, SUBENTRY_AMBIENT, SUBENTRY_FOOD, SUBENTRY_PROBE
 from .presets import Catalog
 from .probe import Ambient, Probe, SettingsStore
+from .websocket import async_setup as async_setup_websocket
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -34,6 +36,12 @@ class SousChefData:
 
 
 type SousChefConfigEntry = ConfigEntry[SousChefData]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Give the Sous Chef Card the preset charts."""
+    async_setup_websocket(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SousChefConfigEntry) -> bool:

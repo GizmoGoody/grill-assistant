@@ -79,6 +79,7 @@ Every preset names its source: one published chart. Government charts give a saf
 - The **Progress** sensor's attributes: `internal` (entity ID, or empty for the lowest of the channels), `channels` (entity IDs, from the tip), `colors` (Home Assistant color names, in order) and `start`.
 - **Source**, **Food type** and **Doneness** carry the chart's link as `url`. Doneness also carries `rest_minutes` or `hold_minutes` when the chart gives one.
 - The ambient **Alarm** sensor's `sensor` attribute is the ambient sensor's entity ID.
+- The websocket command `sous_chef/charts` gives every source's whole chart, in the Source select's order: each source's `key`, `url`, `government` and `countries`, and its `foods`, each with its `key`, `icon` and `levels` (`key`, `f`, `c`, and `rest_minutes` or `hold_minutes` when the chart gives one).
 
 ## License
 
