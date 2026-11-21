@@ -1,10 +1,10 @@
-"""Constants for the Grill Assistant integration."""
+"""Constants for the Sous Chef integration."""
 
 from __future__ import annotations
 
 from homeassistant.const import Platform
 
-DOMAIN = "grill_assistant"
+DOMAIN = "sous_chef"
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 

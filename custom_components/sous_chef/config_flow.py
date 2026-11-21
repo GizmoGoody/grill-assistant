@@ -56,15 +56,15 @@ def _grill_options_schema() -> vol.Schema:
     })
 
 
-class GrillConfigFlow(ConfigFlow, domain=DOMAIN):
+class SousChefConfigFlow(ConfigFlow, domain=DOMAIN):
     """A grill: a name and its own sensors, then probes added to it."""
 
     VERSION = 1
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> GrillOptionsFlow:
-        return GrillOptionsFlow()
+    def async_get_options_flow(config_entry: ConfigEntry) -> SousChefOptionsFlow:
+        return SousChefOptionsFlow()
 
     @classmethod
     @callback
@@ -87,7 +87,7 @@ class GrillConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-class GrillOptionsFlow(OptionsFlow):
+class SousChefOptionsFlow(OptionsFlow):
     """The grill's sensors, and whether a new cook keeps the last one's settings."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:

@@ -1,22 +1,22 @@
-# Grill Assistant
+# Sous Chef
 
-Grill Assistant turns any meat thermometer in Home Assistant into a cook. You say what you are cooking and how done you want it. It tells you how far along the meat is, how fast it is heating, when it will be done, and whether it has stalled.
+Sous Chef turns any meat thermometer in Home Assistant into a cook. You say what you are cooking and how done you want it. It tells you how far along the meat is, how fast it is heating, when it will be done, and whether it has stalled.
 
 Every cook is kept as entities, so every browser shows the same cook at once, a change made in one shows in all, and automations can use it. It needs no helpers and no automations.
 
-The [Grill Card](https://github.com/GizmoGoody/grill-card) shows it on a dashboard.
+The [Sous Chef Card](https://github.com/GizmoGoody/sous-chef-card) shows it on a dashboard.
 
 > [!WARNING]
 > **Alpha developmental software. Use with caution.** Do not rely on it alone for food safety. Check the temperature with a second thermometer before serving.
 
 ## Install
 
-1. Go to **Settings → Marketplace**, then ⋮ → **Add from link**. Enter `GizmoGoody/grill-assistant`, type **Integration**.
-2. Install **Grill Assistant**. For a pre-release, use ⋮ → **Install another version**.
+1. Go to **Settings → Marketplace**, then ⋮ → **Add from link**. Enter `GizmoGoody/sous-chef`, type **Integration**.
+2. Install **Sous Chef**. For a pre-release, use ⋮ → **Install another version**.
 
 ## Set up
 
-1. **Settings → Devices & services → Add integration → Grill Assistant.** Name the grill, and optionally choose the sensors that read the grill itself (ambient, dome). A grill can have several.
+1. **Settings → Devices & services → Add integration → Sous Chef.** Name the grill, and optionally choose the sensors that read the grill itself (ambient, dome). A grill can have several.
 2. On the grill, choose **Add probe**, then choose the probe device and, optionally, its colors (several, in order, for a striped probe).
    - A **ThermoWorks RFX MEAT** needs nothing else: its core (channel 0) is the reading, and its sensors (channels 1 to 4) run from the tip.
    - A device with **one** temperature sensor needs nothing else.
@@ -61,7 +61,7 @@ On the grill's own device: **Active probes**, the number of probes that are on.
 | Seafood | Tuna 130, Salmon 145, Shrimp 145, Scallops 145, Lobster 145 |
 | Manual | Any target you set |
 
-### For the Grill Card
+### For the Sous Chef Card
 
 - The **Progress** sensor's attributes: `reading` (entity ID), `channels` (entity IDs, from the tip), `colors` (Home Assistant color names, in order) and `start`.
 - The **Active probes** sensor's attributes: `grill_sensors` (entity IDs) and `probes` (each probe's Progress entity ID).

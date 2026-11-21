@@ -1,9 +1,9 @@
-"""Grill Assistant: the cook state of each meat probe on a grill.
+"""Sous Chef: the cook state of each meat probe on a grill.
 
 A grill is a config entry and each of its probes a config subentry. The
 integration keeps every probe's cook (on or off, type, doneness, target) as entities,
 so every browser shows the same cook at once and automations can use it.
-The Grill Card (a separate repository) shows them.
+The Sous Chef Card (a separate repository) shows them.
 """
 
 from __future__ import annotations
@@ -15,12 +15,12 @@ from homeassistant.helpers import config_validation as cv
 from .const import CONF_KEEP_LAST, DOMAIN, PLATFORMS, SUBENTRY_PROBE
 from .probe import CookStore, Probe
 
-type GrillConfigEntry = ConfigEntry[dict[str, Probe]]
+type SousChefConfigEntry = ConfigEntry[dict[str, Probe]]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: GrillConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: SousChefConfigEntry) -> bool:
     """Set up a grill and its probes."""
     store = CookStore(hass, entry.entry_id)
     await store.async_load()
@@ -40,11 +40,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: GrillConfigEntry) -> boo
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: GrillConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: SousChefConfigEntry) -> bool:
     for store in {probe.store for probe in entry.runtime_data.values()}:
         await store.async_flush()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def _async_reload(hass: HomeAssistant, entry: GrillConfigEntry) -> None:
+async def _async_reload(hass: HomeAssistant, entry: SousChefConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)

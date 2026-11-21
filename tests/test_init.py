@@ -5,7 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util.unit_system import US_CUSTOMARY_SYSTEM
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.grill_assistant.const import DOMAIN
+from custom_components.sous_chef.const import DOMAIN
 
 from .helpers import rfx_meat, rfx_state
 

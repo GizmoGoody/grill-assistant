@@ -5,7 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.grill_assistant.const import DOMAIN
+from custom_components.sous_chef.const import DOMAIN
 
 from .helpers import TEMPERATURE, other_probe, rfx_meat
 
